@@ -1,19 +1,16 @@
 package com.anthonymandra.cloudprovider
 
 import android.database.Cursor
+import android.database.MatrixCursor
 import android.os.CancellationSignal
 import android.os.ParcelFileDescriptor
 import android.provider.DocumentsProvider
-import com.dropbox.core.v2.DbxClientV2
-import com.dropbox.core.DbxRequestConfig
-import android.content.pm.ProviderInfo
-import android.content.ComponentName
-import android.content.Context
-import android.content.pm.PackageManager
-import android.util.Log
-import com.dropbox.core.v2.users.FullAccount
-
-
+import com.dropbox.core.android.Auth
+import java.lang.IllegalStateException
+import android.provider.DocumentsContract.Root.FLAG_SUPPORTS_CREATE
+import android.R
+import android.provider.DocumentsContract
+import android.provider.DocumentsContract.Root.COLUMN_ROOT_ID
 
 
 
@@ -39,28 +36,23 @@ class DropboxProvider: DocumentsProvider() {
     }
 
     override fun queryRoots(projection: Array<out String>?): Cursor {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    fun getDropboxClient() {
-        val config = DbxRequestConfig.newBuilder(authority).build()
-        val client = DbxClientV2(config, "") // FIXME: REMOVE
-        val account = client.users().currentAccount
-        Log.d("cloud_test", account.name.displayName)
-    }
-
-    private val authority: String   //TODO: Singleton this or something
-        get() {
-            var authority = "com.anthonymandra.cloudprovider.DropboxProvider"
-
-            try {
-                context?.let {
-                    val componentName = ComponentName(it, this::class.java.name)
-                    val providerInfo = it.packageManager.getProviderInfo(componentName, 0)
-                    authority = providerInfo.authority
-                }
-            } finally {
-                return authority
+        try {
+            val client = DropboxClientFactory.client
+        } catch(e: IllegalStateException) { // Test if we can attempt auth thru the provider
+            context?.let {
+                Auth.startOAuth2Authentication(it, "tnw5ufssav0syht")   // TODO: appKey
             }
+        }
+
+//        val result = MatrixCursor(arrayOf())
+//        val row = result.newRow()
+//        row.add(DocumentsContract.Root.COLUMN_ROOT_ID, rootId)
+//        row.add(DocumentsContract.Root.COLUMN_ICON, R.mipmap.ic_launcher)
+//        row.add(
+//            DocumentsContract.Root.COLUMN_TITLE,
+//            context!!.getString(R.string.app_name)
+//        )
+//        row.add(DocumentsContract.Root.COLUMN_FLAGS, DocumentsContract.Root.FLAG_LOCAL_ONLY or DocumentsContract.Root.FLAG_SUPPORTS_CREATE)
+//        row.add(DocumentsContract.Root.COLUMN_DOCUMENT_ID, rootDocumentId)
     }
 }

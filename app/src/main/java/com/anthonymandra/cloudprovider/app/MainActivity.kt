@@ -1,17 +1,12 @@
 package com.anthonymandra.cloudprovider.app
 
-import android.content.ComponentName
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
-import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import com.dropbox.core.DbxRequestConfig
+import com.anthonymandra.cloudprovider.DropboxClientFactory
 import com.dropbox.core.android.Auth
-import com.dropbox.core.v2.DbxClientV2
 import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
@@ -30,12 +25,8 @@ class MainActivity : AppCompatActivity() {
             Auth.startOAuth2Authentication(this, "tnw5ufssav0syht")
         }
 
-        fab.setOnClickListener { view ->
+        fab.setOnClickListener {
             Single.fromCallable {
-                Auth.getOAuth2Token()?.let {
-                    DropboxClientFactory.init(this, it)
-                }
-
                 val client = DropboxClientFactory.client
                 val account = client.users().currentAccount
                 Log.d("cloud_test", account.name.displayName)
@@ -77,35 +68,6 @@ class MainActivity : AppCompatActivity() {
         return when(item.itemId) {
             R.id.action_settings -> true
             else -> super.onOptionsItemSelected(item)
-        }
-    }
-
-    /**
-     * Singleton instance of [DbxClientV2] and friends
-     */
-    object DropboxClientFactory {
-
-        private var sDbxClient: DbxClientV2? = null
-
-        val client: DbxClientV2
-            get() {
-                return sDbxClient ?: throw IllegalStateException("Client not initialized.")
-            }
-
-        fun init(context: Context, accessToken: String) {
-            if (sDbxClient == null) {
-                var authority = "com.anthonymandra.cloudprovider.DropboxProvider"
-                try {
-                    val componentName = ComponentName(context, this::class.java.name)
-                    val providerInfo = context.packageManager.getProviderInfo(componentName, 0)
-                    authority = providerInfo.authority
-                } catch(e: Exception) {}
-
-                val requestConfig = DbxRequestConfig.newBuilder(authority)
-                    .build()
-
-                sDbxClient = DbxClientV2(requestConfig, accessToken)
-            }
         }
     }
 }
