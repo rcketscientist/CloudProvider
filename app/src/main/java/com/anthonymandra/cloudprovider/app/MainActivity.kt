@@ -1,11 +1,12 @@
 package com.anthonymandra.cloudprovider.app
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
-import com.anthonymandra.cloudprovider.DropboxClientFactory
+import com.anthonymandra.cloudprovider.dropbox.DropboxClientFactory
 import com.dropbox.core.android.Auth
 import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers
@@ -22,7 +23,14 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
         loginButton.setOnClickListener {
-            Auth.startOAuth2Authentication(this, "tnw5ufssav0syht")
+            Auth.startOAuth2Authentication(this, BuildConfig.DROPBOX_API_KEY)
+        }
+
+        openDocument.setOnClickListener {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                setType("*/*")
+            }
+            startActivity(intent)
         }
 
         fab.setOnClickListener {

@@ -25,8 +25,7 @@
                 android:launchMode="singleTask">
             <intent-filter>
 
-                <!-- Change this to be db- followed by your app key -->
-                <data android:scheme="db-tnw5ufssav0syht" />
+                <data android:scheme="db-${dropboxApiKey}" />
 
                 <action android:name="android.intent.action.VIEW" />
 
@@ -34,6 +33,16 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <provider
+                android:name="com.anthonymandra.cloudprovider.dropbox.DropboxProvider"
+                android:authorities="com.anthonymandra.cloudprovider.dropbox.DropboxProvider"
+                android:grantUriPermissions="true"
+                android:exported="true"
+                android:permission="android.permission.MANAGE_DOCUMENTS">
+            <intent-filter>
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+            </intent-filter>
+        </provider>
     </application>
 
 </manifest>

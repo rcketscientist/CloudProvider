@@ -1,1 +1,1 @@
-include ':app', ':cloudprovider'
+include ':app'

@@ -1,4 +1,4 @@
-package com.anthonymandra.cloudprovider
+package com.anthonymandra.cloudprovider.dropbox
 
 import com.dropbox.core.DbxRequestConfig
 import com.dropbox.core.android.Auth
