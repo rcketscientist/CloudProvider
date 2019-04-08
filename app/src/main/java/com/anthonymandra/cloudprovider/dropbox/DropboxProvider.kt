@@ -68,6 +68,11 @@ class DropboxProvider: DocumentsProvider() {
             var childFolders = client.files().listFolder(dropboxPath)
             while (true) {
                 for (metadata in childFolders.entries) {
+                    if (metadata is FolderMetadata) {
+                        Log.d("parent: $parentDocumentId", "child: ${metadata.id}, ${metadata.pathLower}")
+                    } else if (metadata is FileMetadata) {
+                        Log.d("parent: $parentDocumentId", "child: ${metadata.id}, ${metadata.pathLower}")
+                    }
                     addDocumentRow(result, metadata)
                 }
 
@@ -122,9 +127,18 @@ class DropboxProvider: DocumentsProvider() {
         row.add(DocumentsContract.Root.COLUMN_ROOT_ID, "com.anthonymandra.cloudprovider.dropbox")
         row.add(DocumentsContract.Root.COLUMN_ICON, R.drawable.ic_dropbox_gray)
         row.add(DocumentsContract.Root.COLUMN_TITLE, "Dropbox")
-        row.add(DocumentsContract.Root.COLUMN_FLAGS, DocumentsContract.Root.FLAG_SUPPORTS_CREATE)   // TODO:
+        row.add(DocumentsContract.Root.COLUMN_FLAGS,
+            DocumentsContract.Root.FLAG_SUPPORTS_CREATE or
+            DocumentsContract.Root.FLAG_SUPPORTS_IS_CHILD)
         row.add(DocumentsContract.Root.COLUMN_DOCUMENT_ID, ROOT_DOCUMENT_ID)
         return result
+    }
+
+    override fun isChildDocument(parentDocumentId: String?, documentId: String?): Boolean {
+        Log.d("parent", parentDocumentId)
+        Log.d("child", documentId)
+
+        return false
     }
 
     fun addDocumentRow(result: MatrixCursor, metadata: Metadata) {
