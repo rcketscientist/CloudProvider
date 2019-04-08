@@ -1,5 +1,6 @@
 package com.anthonymandra.cloudprovider.dropbox
 
+import android.app.AuthenticationRequiredException
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.os.CancellationSignal
@@ -39,20 +40,18 @@ class DropboxProvider: DocumentsProvider() {
         DocumentsContract.Document.COLUMN_SIZE
     )
 
-    override fun openDocument(documentId: String?, mode: String?, signal: CancellationSignal?): ParcelFileDescriptor {
-        try {
-            val client = DropboxClientFactory.client
+    override fun openDocument(documentId: String?, mode: String?, signal: CancellationSignal?): ParcelFileDescriptor? {
+        context?.let {
+            val client = DropboxClientFactory.getInstance(it) ?: throw FileNotFoundException()  // FIXME:
             val metadata = client.files().getMetadata(documentId)
-            val file = File(context.filesDir, metadata.getName())
+            val file = File(it.filesDir, metadata.name)
 
-            Log.d("openDocument", "opening ${documentId}")
-            FileOutputStream(file).use {
-                val metadata = client.files().download(documentId).download(it) //TODO: pipes
+            FileOutputStream(file).use { os ->
+                val metadata = client.files().download(documentId).download(os) //TODO: pipes
                 return ParcelFileDescriptor.open(file, MODE_READ_WRITE)
             }
-        } catch (e: Exception) {
-            throw FileNotFoundException()
         }
+        throw FileNotFoundException()
     }
 
     override fun queryChildDocuments(
@@ -60,19 +59,15 @@ class DropboxProvider: DocumentsProvider() {
         projection: Array<out String>?,
         sortOrder: String?
     ): Cursor {
-        Log.d("cloud_path", "queryChildDocuments")
         // TODO: Likely need to be more strict about projection (ie: map to supported)
         val result = MatrixCursor(projection ?: DEFAULT_DOCUMENT_PROJECTION)
         val dropboxPath = if (parentDocumentId == ROOT_DOCUMENT_ID) "" else parentDocumentId
 
-        try {
-            val client = DropboxClientFactory.client
-
-            Log.d("cloud_path", "list")
+        context?.let {
+            val client = DropboxClientFactory.getInstance(it) ?: return result
             var childFolders = client.files().listFolder(dropboxPath)
             while (true) {
                 for (metadata in childFolders.entries) {
-                    Log.d("cloud_path", metadata.pathLower)
                     addDocumentRow(result, metadata)
                 }
 
@@ -82,18 +77,11 @@ class DropboxProvider: DocumentsProvider() {
 
                 childFolders = client.files().listFolderContinue(childFolders.cursor)
             }
-        } catch(e: IllegalStateException) { // Test if we can attempt auth thru the provider
-            context?.let {
-                Log.d("cloud_path", "queryChildDocuments Auth")
-                Auth.startOAuth2Authentication(it, BuildConfig.DROPBOX_API_KEY)   // TODO: appKey
-            }
         }
         return result
     }
 
     override fun queryDocument(documentId: String?, projection: Array<out String>?): Cursor {
-        Log.d("cloud_path", "queryDocument")
-
         // TODO: Likely need to be more strict about projection (ie: map to supported)
         val result = MatrixCursor(projection ?: DEFAULT_DOCUMENT_PROJECTION)
 
@@ -108,16 +96,12 @@ class DropboxProvider: DocumentsProvider() {
             return result
         }
 
-        try {
-            val client = DropboxClientFactory.client
+        context?.let {
+            val client = DropboxClientFactory.getInstance(it) ?: return result
             val metadata = client.files().getMetadata(documentId)
             addDocumentRow(result, metadata)
-        } catch(e: IllegalStateException) { // Test if we can attempt auth thru the provider
-            context?.let {
-                Log.d("cloud_path", "queryDocument Auth")
-                Auth.startOAuth2Authentication(it, BuildConfig.DROPBOX_API_KEY)   // TODO: appKey
-            }
         }
+
         return result
     }
 
@@ -128,6 +112,11 @@ class DropboxProvider: DocumentsProvider() {
     override fun queryRoots(projection: Array<out String>?): Cursor {
         // TODO: Likely need to be more strict about projection (ie: map to supported)
         val result = MatrixCursor(projection ?: DEFAULT_ROOT_PROJECTION)
+
+        // If we don't have a valid client we won't display roots
+        context?.let {
+            DropboxClientFactory.getInstance(it) ?: return result
+        }
 
         val row = result.newRow()
         row.add(DocumentsContract.Root.COLUMN_ROOT_ID, "com.anthonymandra.cloudprovider.dropbox")

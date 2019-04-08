@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.anthonymandra.cloudprovider.app" >
+
+    <uses-permission
+        android:name="android.permission.GET_ACCOUNTS"
+        android:maxSdkVersion="22" />
     <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:allowBackup="true"
@@ -35,7 +39,7 @@
         </activity>
         <provider
                 android:name="com.anthonymandra.cloudprovider.dropbox.DropboxProvider"
-                android:authorities="com.anthonymandra.cloudprovider.dropbox.DropboxProvider"
+                android:authorities="${dropboxAuthority}"
                 android:grantUriPermissions="true"
                 android:exported="true"
                 android:permission="android.permission.MANAGE_DOCUMENTS">

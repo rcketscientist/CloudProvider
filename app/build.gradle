@@ -14,17 +14,22 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.anthonymandra.cloudprovider.app"
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        multiDexEnabled true
 
-        def dropboxKey = 'db-' + keys.dropboxApiKey
-        println(dropboxKey)
-        manifestPlaceholders = [dropboxApiKey:keys.dropboxApiKey]
+        def dropboxAuthority = "com.anthonymandra.cloudprovider.dropbox.DropboxProvider"
+        manifestPlaceholders = [
+            dropboxAuthority:dropboxAuthority,
+            dropboxApiKey:keys.dropboxApiKey
+        ]
         buildConfigField 'String', "DROPBOX_API_KEY", "\"${keys.dropboxApiKey}\""
+        buildConfigField 'String', "DROPBOX_AUTHORITY", "\"$dropboxAuthority\""
+    }
+    compileOptions {
+        targetCompatibility JavaVersion.VERSION_1_8
     }
     buildTypes {
         release {
@@ -45,8 +50,7 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.1.0-alpha4'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0-alpha4'
 
-    implementation 'com.android.support:multidex:1.0.3' // TODO: Didn't need this on one machine
-
+    implementation("com.squareup.okhttp3:okhttp:3.14.0")
     implementation 'com.dropbox.core:dropbox-core-sdk:3.0.10'
 
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
